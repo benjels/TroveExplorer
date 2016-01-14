@@ -20,25 +20,22 @@ class Home(Resource):
             'search for a particular trove article and display the titles of related wikipedia articles': 'http://127.0.0.1/trove/<some trove ID here>'
         }
 #TODO: check encoding that I am using to write to files in java... (some characters are being lost) e.g. Maori
-#todo: get this to return links to related wikiopedia articles
+
 class TroveArticle(Resource):
     def get(self, troveID):
         filePath = "{}{}.json".format(TROVE_ARTICLES_PATH, troveID)
         with open(filePath, "r") as troveFile:
             troveArticle = json.load(troveFile)
-            troveArticle['url'] = '{}{}'.format(APP_BASE_URL, troveArticle['uid'])
+            #we need to build a list of dictionaries where each entry has a title and a url
+            relatedArticles = []
+            for eachTitle in troveArticle["relatedTopics"]:
+                eachTitleURL = '{}/topic/{}'.format(APP_BASE_URL, eachTitle.replace(" ", "_"))
+                relatedArticles.append({"title" : eachTitle, "topicURL" : eachTitleURL})
+        troveArticle["relatedTopics"] = relatedArticles
         return troveArticle
 
 
-class WikipediaArticle(Resource):
-    def get(self, wikipediaTitle):
-        filePath = "{}{}.json".format(WIKIPEDIA_ARTICLES_PATH, wikipediaTitle.replace(" ","_"))
-        with open(filePath, "r") as wikipediaFile:
-            wikipediaArticle = json.load(wikipediaFile)
-        return wikipediaArticle
-
-
-class WikipediaArticleVerbose(Resource):
+class Topic(Resource):
     def get(self, title):
         with open(WIKIPEDIA_ARTICLES_PATH + title.replace(" ", "_") + ".json") as wikipediaJSON:
             #fill out a dictionary to return as json
@@ -46,38 +43,61 @@ class WikipediaArticleVerbose(Resource):
             result = {}
             result['topicID'] = (wikipediaJSONObj['topicID'])
             result['title'] = (wikipediaJSONObj['title'])
-            #now get the addtional info for each related trove article
+            #now get the addtional info for each related trove article whose info we put under each trove entry
             relatedTroveArticlesInfo = []
             for eachTroveID in wikipediaJSONObj["relatedTroveArticles"]:
                 troveArticle = TroveArticle().get(str(eachTroveID))
-                troveArticle["fulltext"] = "" #TODO: get rid of this
                 troveArticle['troveURL'] = "{}/trove/{}".format(APP_BASE_URL, eachTroveID)
                 relatedTroveArticlesInfo.append(troveArticle)#TODO: should just have a module level function that does this as a helper and is used by the two resource methods
-            result['articles'] = (relatedTroveArticlesInfo)
+            result['articles'] = relatedTroveArticlesInfo
             return result
 
- # class WikipediaArticleIntersection(Resource):
- #     def get(self, titles):
- #         listOfSearchTerms = titles.split("&")
- #         setsOfIDs = set() #each article has a set of IDs and we want their intersection
- #         for each in listOfSearchTerms:
- #             articleJSON = json.loads(WikipediaArticle().get(each))
- #             print(articleJSON)
+class WikipediaArticleIntersection(Resource):
+  def get(self, titles):
+      listOfSearchTerms = titles.split("&")
+      setsOfIDs = []
+      for each in listOfSearchTerms:
+        eachTopicRelatedArticles = Topic().get(each)["articles"]
+        eachTopicRelatedArticlesIDs = set()
+        for eachArticle in eachTopicRelatedArticles:
+            eachTopicRelatedArticlesIDs.add(eachArticle["uid"])
+        setsOfIDs.append(eachTopicRelatedArticlesIDs)
+      #so now we have an array where each entry is a set of trove UIDs. We need to find their intersection
+      result = {}
+      intersectionIDs = set.intersection(*setsOfIDs)
+      intersectionArticles = []
+      for eachTroveID in intersectionIDs:
+           troveArticle = TroveArticle().get(str(eachTroveID))
+           troveArticle['troveURL'] = "{}/trove/{}".format(APP_BASE_URL, eachTroveID)
+           intersectionArticles.append(troveArticle)
+      result['articles'] = intersectionArticles
+      #now we have the related trove articles, fill in the rest of the result
+      result['searchedTopics'] = listOfSearchTerms #TODO: this should be a list of dictionaries where each entry has the title, id and a link to that topic's individual page
+      return result
 
 
 
 
+
+
+#TODO: consider removing this. just support verbose and trove
+# class WikipediaArticle(Resource):
+#     def get(self, wikipediaTitle):
+#         filePath = "{}{}.json".format(WIKIPEDIA_ARTICLES_PATH, wikipediaTitle.replace(" ","_"))
+#         with open(filePath, "r") as wikipediaFile:
+#             wikipediaArticle = json.load(wikipediaFile)
+#         return wikipediaArticle
 
 
 api.add_resource(Home, '/')
 api.add_resource(TroveArticle, '/trove/<troveID>')
-api.add_resource(WikipediaArticle, '/wikipedia/<wikipediaTitle>')
-api.add_resource(WikipediaArticleVerbose, '/verbose/<title>')
-# api.add_resource(WikipediaArticleIntersection, '/intersection/<titles>')
-
+api.add_resource(Topic, '/topic/<title>')
+api.add_resource(WikipediaArticleIntersection, '/intersection/<titles>')
+#api.add_resource(WikipediaArticle, '/wikipedia/<wikipediaTitle>')
 
 
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int("80"), debug=True)
-   # WikipediaArticleIntersection().get("new zealand&auckland")
+
+   #print(WikipediaArticleIntersection().get("new zealand&auckland"))
