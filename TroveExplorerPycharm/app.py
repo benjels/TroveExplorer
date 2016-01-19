@@ -1,10 +1,9 @@
-
+#TODO:UNRELATED TO THIS PROGRAM check encoding that I am using to write to files in java... (some characters are being lost) e.g. Maori a grave/acute symbol thins was getting lost in my google docs dump
 from flask import Flask
 from flask_restful import Resource, Api
 import json
 
-app = Flask(__name__)
-api = Api(app)
+
 
 TROVE_ARTICLES_PATH = "C:\\!2015SCHOLARSHIPSTUFF\\TroveJSON\\"
 WIKIPEDIA_ARTICLES_PATH = "C:\\!2015SCHOLARSHIPSTUFF\\WikipediaJSON\\"
@@ -13,14 +12,14 @@ VERBOSE_WIKIPEDIA_PATH = "C:\\!2015SCHOLARSHIPSTUFF\\verboseJSON\\"
 APP_BASE_URL = "http://127.0.0.1"
 
 
+
 class Home(Resource):
     def get(self):
         return {
-            'search for all trove articles related to a wikipedia title and display their content': 'http://127.0.0.1/verbose/<some title here>',
-            'search for all trove articles related to a wikipedia title and display their IDs': 'http://127.0.0.1/wikipedia/<some title here>',
+            'search for all trove articles related to a wikipedia title and display their IDs': 'http://127.0.0.1/topic/<some title here>',
             'search for a particular trove article and display the titles of related wikipedia articles': 'http://127.0.0.1/trove/<some trove ID here>'
         }
-#TODO: check encoding that I am using to write to files in java... (some characters are being lost) e.g. Maori a grave/acute symbol thins was getting lost in my google docs dump
+
 
 class TroveArticle(Resource):
     def get(self, troveID):
@@ -36,20 +35,20 @@ class TroveArticle(Resource):
         return troveArticle
 
 
-
 class Topic(Resource):
   def get(self, titles):
       result = {}
       setsOfIDs = []
       searchedTopics = []
       listOfSearchTerms = titles.split("&")
+      #for each of the topics that the user has queried, go and get the info for that topic. Including the trove articles it is related to so that we can use them to find the intersection.
       for eachTerm in listOfSearchTerms:
         with open("{}{}.json".format(WIKIPEDIA_ARTICLES_PATH, eachTerm.replace(" ", "_"))) as eachTopicJSONFile:
             eachTopicJSON = json.load(eachTopicJSONFile)
         searchedTopics.append({"title" : eachTopicJSON["title"], "topicID" : eachTopicJSON["topicID"], "URL" : "{}/topic/{}".format(APP_BASE_URL, eachTopicJSON["title"].replace(" ", "_"))})
         setsOfIDs.append(set(eachTopicJSON["relatedTroveArticles"]))
       result["searchedTopics"] = searchedTopics
-      #so now we have an array where each entry is a set of trove UIDs. We need to find their intersection
+      #so now we have an array where each entry is a set of trove UIDs. We need to find their intersection and then make JSON dictionaries for each trove article of interest.
       intersectionIDs = set.intersection(*setsOfIDs)
       intersectionArticles = []
       for eachTroveID in intersectionIDs:
@@ -60,15 +59,11 @@ class Topic(Resource):
       return result
 
 
-
-
-
-
+app = Flask(__name__)
+api = Api(app)
 api.add_resource(Home, '/')
 api.add_resource(TroveArticle, '/trove/<troveID>')
 api.add_resource(Topic, '/topic/<titles>')
-
-
 
 
 if __name__ == '__main__':
