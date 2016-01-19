@@ -15,9 +15,9 @@ https://en.wikipedia.org/wiki/James_Cook
 
 You can look at the information about individual trove articles by clicking the links to them in the returned JSON, or by searching something like this:
 
-127.0.0.1/trove/<someTroveArticleID>
+127.0.0.1/trove/[someTroveArticleID]
 
-where <someTroveArticleID> is the unique ID of the Trove article that you want to find out about.
+where [someTroveArticleID] is the unique ID of the Trove article that you want to find out about.
 
 
 
