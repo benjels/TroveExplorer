@@ -1,0 +1,17 @@
+<!doctype html>
+<title>Trove Search</title>
+{% if articleTitle %}
+  <h1> {{ articleTitle }} </h1>
+  
+  
+  
+  <p> {{fulltext}}</p>
+  <h1>the titles of the related topics are: </h1>
+  {% for eachTopic in relatedTopics %}
+	<font color="green" face="verdana">
+	<li>{{ eachTopic["title"] }}</li>
+	</font>
+  {% endfor %}
+{% else %}
+  <h1>no article provided</h1>
+{% endif %}

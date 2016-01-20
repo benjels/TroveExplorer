@@ -1,0 +1,17 @@
+<!doctype html>
+<title>Topic Search</title>
+{% if topics %}
+  <h1>showing results for these topics: </h1>
+  {% for eachTopic in topics %}
+	<li>{{ eachTopic["title"] }}</li>
+  {% endfor %}
+  <h1>the titles of the found trove articles are: </h1>
+  {% for eachTrove in troves %}
+	<font color="red" face="verdana">
+	<li>{{ eachTrove["title"] }}</li>
+	</font>
+	<p>{{ eachTrove["fulltext"]}}</p>
+  {% endfor %}
+{% else %}
+  <h1>no topics provided</h1>
+{% endif %}
