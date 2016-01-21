@@ -1,17 +1,13 @@
 <!doctype html>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 <title>Trove Search</title>
-{% if articleTitle %}
+% if articleTitle: 
   <h1> {{ articleTitle }} </h1>
-  
-  
-  
   <p> {{fulltext}}</p>
   <h1>the titles of the related topics are: </h1>
-  {% for eachTopic in relatedTopics %}
-	<font color="green" face="verdana">
+  % for eachTopic in relatedTopics:
 	<li>{{ eachTopic["title"] }}</li>
-	</font>
-  {% endfor %}
-{% else %}
+  % endfor
+% else:
   <h1>no article provided</h1>
-{% endif %}
+% endif 

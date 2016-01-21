@@ -1,17 +1,17 @@
 <!doctype html>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 <title>Topic Search</title>
-{% if topics %}
+% if topics:
   <h1>showing results for these topics: </h1>
-  {% for eachTopic in topics %}
+  % for eachTopic in topics:
 	<li>{{ eachTopic["title"] }}</li>
-  {% endfor %}
+  % endfor 
   <h1>the titles of the found trove articles are: </h1>
-  {% for eachTrove in troves %}
-	<font color="red" face="verdana">
+  % for eachTrove in troves:
 	<li>{{ eachTrove["title"] }}</li>
-	</font>
 	<p>{{ eachTrove["fulltext"]}}</p>
-  {% endfor %}
-{% else %}
+  % endfor 
+% else:
   <h1>no topics provided</h1>
-{% endif %}
+% endif 
+
